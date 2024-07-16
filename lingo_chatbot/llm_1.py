@@ -10,9 +10,6 @@ from langchain.chains.conversation.base import ExtendedConversationBufferMemory
 
 from langchain_core.prompts import PromptTemplate
 
-import json
-
-
 def load_api_key(env_var_name):
     """Load the API key from the environment variables."""
     load_dotenv()
@@ -98,13 +95,8 @@ def create_llm_chain(llm, prompt, memory):
         llm=llm,
         prompt=prompt,
         memory=memory,
-        verbose=True
+        verbose=False
     )
-
-def save_conversation_to_json(conversation_history, file_name):
-    with open(file_name, 'w', encoding='utf-8') as f:
-        json.dump(conversation_history, f, ensure_ascii=False, indent=4)
-
 
 class ChatBot:
     def __init__(self, char, user, char_personality, scenario, first_message):
@@ -116,15 +108,16 @@ class ChatBot:
         self.llm = create_llm(self.api_key)
         self.memory = create_memory(self.llm, char, user)
         self.llm_chain = create_llm_chain(self.llm, self.prompt, self.memory)
-        self.conversation_history = []
 
-    def chat(self, input_text):
-        response = self.llm_chain.invoke({"input": input_text, "context": self.context})
-        self.conversation_history.append({"user": input_text, "bot": response})
-        return response
-
-    def save_conversation(self, file_name):
-        save_conversation_to_json(self.conversation_history, file_name)
+    def chat(self):
+        response = self.llm_chain.invoke({"input": "Hi", "context": self.context})
+        print(response['response'])
+        while True:
+            user_input = input("user: ")
+            if user_input.lower() in ['exit', 'quit']:
+                break
+            response = self.llm_chain.invoke({"input": user_input, "context": self.context})
+            print(f"{self.char}: {response['response']}")
 
 if __name__ == "__main__":
     char = "Mr.Orbit"
@@ -142,20 +135,8 @@ You should talk as detail as possible to explain that subjects.
     scenario = '''
     {char} and {user} are in a talk show, discussing scientific facts in detail.
     '''
-    first_message = "What can I help you with today?"
+    first_message = "안녕하세요, 과학커뮤니케이터 궤도입니다."
     user = "A"
 
     chatbot = ChatBot(char, user, char_personality, scenario, first_message)
-    # 시작 대화
-    print(chatbot.chat("Hi"))
-
-    # 추가 입력을 통해 지속적인 대화
-    while True:
-        user_input = input("user: ")
-        if user_input.lower() in ['exit', 'quit']:
-            break
-        response = chatbot.chat(user_input)
-        print(f"{char}: {response}")
-        
-    # 대화 내역 저장
-    chatbot.save_conversation("Chat_log\\conversation_history.json")
+    chatbot.chat()
