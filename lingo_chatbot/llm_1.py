@@ -111,7 +111,7 @@ class ChatBot:
 
     def chat(self):
         response = self.llm_chain.invoke({"input": "Hi", "context": self.context})
-        print(response['response'])
+        print(f"{self.char}: {response['response']}")
         while True:
             user_input = input("user: ")
             if user_input.lower() in ['exit', 'quit']:
